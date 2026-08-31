@@ -1,0 +1,83 @@
+[Running] swift "/Users/tylerswindell/Documents/School/PNC Bootcamp/homework/2026-08-31/VariableTypes.swift"
+/Users/tylerswindell/Documents/School/PNC Bootcamp/homework/2026-08-31/VariableTypes.swift:176:11: warning: will never be executed
+173 | //   otherwise         → print "Low balance alert"
+174 | 
+175 | if (balance > 25_000) {
+    |             `- note: condition always evaluates to false
+176 |     print("Private Banking eligible")
+    |           `- warning: will never be executed
+177 | } else if (balance > 10_000) {
+178 |     print("Preferred client")
+
+/Users/tylerswindell/Documents/School/PNC Bootcamp/homework/2026-08-31/VariableTypes.swift:178:11: warning: will never be executed
+175 | if (balance > 25_000) {
+176 |     print("Private Banking eligible")
+177 | } else if (balance > 10_000) {
+    |                    `- note: condition always evaluates to false
+178 |     print("Preferred client")
+    |           `- warning: will never be executed
+179 | } else if (balance > 1_000) {
+180 |     print("Standard client")
+
+/Users/tylerswindell/Documents/School/PNC Bootcamp/homework/2026-08-31/VariableTypes.swift:182:11: warning: will never be executed
+177 | } else if (balance > 10_000) {
+178 |     print("Preferred client")
+179 | } else if (balance > 1_000) {
+    |                    `- note: condition always evaluates to true
+180 |     print("Standard client")
+181 | } else {
+182 |     print("Low balance alert")
+    |           `- warning: will never be executed
+183 | }
+184 | 
+PNC Mobile
+1
+4250.75
+0.035
+10
+Welcome to PNC Mobile, Jane Smith. Your account is active.
+******7890
+47 transactions averaging 261.91 each
+Parsed amount: 2500
+Standard client
+Credit rating: Good
+Processing transfer
+Processing deposit
+Invalid amount
+Insufficient funds. Available: 1000.00
+Withdrawal of $500.00 approved
+7
+14
+21
+28
+35
+42
+49
+56
+63
+70
+2
+4
+6
+8
+10
+12
+14
+16
+18
+20
+• Checking
+• Savings
+• Investment
+• Credit Card
+1. Checking
+2. Savings
+3. Investment
+4. Credit Card
+Connection attempt 1...
+Connection attempt 2...
+Connection attempt 3...
+Connected.
+
+[Done] exited with code=0 in 1.587 seconds
+
