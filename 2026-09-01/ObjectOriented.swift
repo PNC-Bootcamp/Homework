@@ -23,6 +23,8 @@ let formatter = DateFormatter()
 formatter.dateStyle = .medium
 formatter.timeStyle = .short
 
+let date = Date()
+
 var components = DateComponents()
 components.year = 2026
 components.month = 09
@@ -168,6 +170,7 @@ class BankAccount {
 
     }
 
+    @discardableResult
     func withdraw(amount: Double) -> Bool {
         guard amount > 0, amount <= balance else {
             return false
@@ -179,7 +182,8 @@ class BankAccount {
     }
 
     func printSummary() {
-        print("Account \(accountNumber) | Owner: \(owner) | Balance: $\(balance)")
+        let fBal = String(format: "%.2f", self.balance)
+        print("Account \(accountNumber) | Owner: \(owner) | Balance: $\(fBal)")
     }
 
 }
@@ -191,7 +195,7 @@ class BankAccount {
 let checking = BankAccount(id: "acc_001", accountNumber: "1234567890", initialBalance: 1_000.00, owner: "Jane Smith")
 let savings = BankAccount(id: "acc_002", accountNumber: "0987654321", initialBalance: 5_000.00, owner: "Jane Smith")
 
-let isWithdrawn = checking.withdraw(amount: 487.12)
+checking.withdraw(amount: 487.12)
 checking.deposit(amount: 2_500.00)
 
 checking.printSummary()
@@ -237,20 +241,8 @@ class PremiumBankAccount: BankAccount {
         super.init(id: id, accountNumber: accountNumber, initialBalance: initialBalance, owner: owner)
     }
 
-    convenience override init(id: String, accountNumber: String, initialBalance: Double = 0.0, owner: String) {
-        self.init(
-            id: id,
-            accountNumber: accountNumber,
-            initialBalance: initialBalance,
-            owner: owner,
-            overdraftLimit: 0.0
-        )
-    }
-
     override func withdraw(amount: Double) -> Bool {
-        guard amount > 0, amount <= balance + overdraftLimit else {
-            return false
-        }
+        guard amount > 0, amount <= balance + overdraftLimit else { return false }
         balance -= amount
         return true
     }
@@ -339,7 +331,7 @@ func describeError(_ error: AccountError) -> String {
     }
 }
 
-// TODO 5d: Iterate over all cases
+// 5d: Iterate over all cases
 // Using CaseIterable on TransactionType, print all transaction types
 // and their raw values:
 // for type in TransactionType.allCases { print(...) }
@@ -351,3 +343,7 @@ print(describeError(.insufficientFunds(available: 100, requested: 250)))
 print(describeError(.accountInactive))
 print(describeError(.dailyLimitExceeded(limit: 1000)))
 print(describeError(.invalidAmount))
+
+div()
+
+for item in TransactionType.allCases { print(item) }
