@@ -1,3 +1,4 @@
+// swiftlint:disable large_tuple
 // ============================================================
 // MODULE 4: Swift Programming Fundamentals
 // Day 3 Exercises — Protocols, ARC, Optionals, Error Handling
@@ -515,35 +516,58 @@ div("5c", "-")
 // Use a do-catch block that handles each specific TransferError case.
 // For each case, print the localized error description.
 
+// let testCases: [(Double, Double, String, Double, Double)] = [
+//     (amount: 0, fromBalance: 1_000, toAccountId: "1", dailyUsed: 0, dailyLimit: 10_000),            // invalidAmount
+//     (amount: 1_500, fromBalance: 1_500, toAccountId: "", dailyUsed: 0, dailyLimit: 10_000),         // accountNotFound
+//     (amount: 1_500, fromBalance: 1_000, toAccountId: "3", dailyUsed: 0, dailyLimit: 10_000),        // insufficientFunds
+//     (amount: 1_500, fromBalance: 1_500, toAccountId: "4", dailyUsed: 9_000, dailyLimit: 10_000),    // dailyLimitExceeded
+//     (amount: 1_500, fromBalance: 1_500, toAccountId: "ERR_NET", dailyUsed: 0, dailyLimit: 10_000),  // networkUnavailable
+//     (amount: 1_500, fromBalance: 1_500, toAccountId: "6", dailyUsed: 0, dailyLimit: 10_000)         // success
+// ]
+
+for test in testCases {
+    do { // invalidAmount
+        print(test)
+        // let result = try executeTransfer(test)
+        // print(result)
+    } catch let err as TransferError { print(err.localizedDescription) } catch { print(error) }
+}
+
 do { // invalidAmount
     let result1 = try executeTransfer(amount: 0, fromBalance: 1_000, toAccountId: "1",
                                       dailyUsed: 0, dailyLimit: 10_000)
     print(result1)
 } catch let err as TransferError { print(err.localizedDescription) } catch { print(error) }
 
-do { // accountNotFound
+do {
     let result2 = try executeTransfer(amount: 1_500, fromBalance: 1_500, toAccountId: "",
                                       dailyUsed: 0, dailyLimit: 10_000)
     print(result2)
 } catch let err as TransferError { print(err.localizedDescription) } catch { print(error) }
 
-do { // insufficientFunds
+do {
     let result3 = try executeTransfer(amount: 1_500, fromBalance: 1_000, toAccountId: "3",
                                       dailyUsed: 0, dailyLimit: 10_000)
     print(result3)
 
 } catch let err as TransferError { print(err.localizedDescription) } catch { print(error) }
 
-do { // dailyLimitExceeded
+do {
     let result4 = try executeTransfer(amount: 1_500, fromBalance: 1_500, toAccountId: "4",
                                       dailyUsed: 9_000, dailyLimit: 10_000)
     print(result4)
 } catch let err as TransferError { print(err.localizedDescription) } catch { print(error) }
 
-do { // networkUnavailable
+do {
     let result5 = try executeTransfer(amount: 1_500, fromBalance: 1_500, toAccountId: "ERR_NET",
                                       dailyUsed: 0, dailyLimit: 10_000)
     print(result5)
+} catch let err as TransferError { print(err.localizedDescription) }
+
+do {
+    let result6 = try executeTransfer(amount: 1_500, fromBalance: 1_500, toAccountId: "6",
+                                      dailyUsed: 0, dailyLimit: 10_000)
+    print(result6)
 } catch let err as TransferError { print(err.localizedDescription) }
 
 // 5d: try? — silently converting failure to nil
