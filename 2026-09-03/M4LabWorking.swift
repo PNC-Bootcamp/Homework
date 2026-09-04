@@ -90,7 +90,7 @@ struct Transaction: Identifiable, Codable, Equatable, Hashable, Summarizable {
 
 // 3A: Define protocol AccountOperations
 
-// TODO 3B: Define class BankAccount
+// 3B: Define class BankAccount
 class BankAccount: Identifiable, AccountOperations, Summarizable {
     let id: String
     let accountNumber: String
@@ -115,10 +115,10 @@ class BankAccount: Identifiable, AccountOperations, Summarizable {
     var availableBalance: Double
     var transactions: [Transaction] = []
 
-    var displayName: String { self.nickname ?? accountType.capitalized }
+    var displayName: String { self.nickname ?? self.accountType.capitalized }
     var maskedAccountNumber: String { "****" + self.accountNumber.suffix(4) }
     var summary: String { "" }
-    var formattedBalance: String { "" }
+    var formattedBalance: String { "$\(String(format: "%.2f", self.balance))" }
 
     var recentTransactions: [Transaction] { [] }
 
@@ -126,17 +126,17 @@ class BankAccount: Identifiable, AccountOperations, Summarizable {
 
     func deposit(amount: Double) throws -> String {
         guard amount > 0 else { throw AccountOperationsError.invalidAmount }
-        guard isActive else {throw AccountOperationsError.accountInactive}
+        guard self.isActive else {throw AccountOperationsError.accountInactive}
         self.balance += amount
         return "Deposited $\(amount) | New Balance: $\(self.balance)"
     }
 
     func withdraw(amount: Double) throws -> String {
         guard amount > 0 else { throw AccountOperationsError.invalidAmount }
-        guard amount <= balance else {
-            throw AccountOperationsError.insufficientFunds(available: self.balance, required: amount) 
+        guard amount <= self.balance else {
+            throw AccountOperationsError.insufficientFunds(available: self.balance, required: amount)
         }
-        guard isActive else {throw AccountOperationsError.accountInactive}
+        guard self.isActive else {throw AccountOperationsError.accountInactive}
         self.balance -= amount
         return "Withdrawn: $\(amount) | New Balance: $\(self.balance)"
     }
@@ -151,6 +151,14 @@ class BankAccount: Identifiable, AccountOperations, Summarizable {
         self.balance -= amount
         return "Transfered $\(amount) → \(destination.maskedAccountNumber) | New Balance: $\(self.balance)"
     }
+
+    func addTransaction(_ transaction: Transaction) {
+        transactions.append(transaction)
+        if transaction.type.isExpense { balance -= transaction.amount
+        } else { balance += transaction.amount }
+
+        availableBalance = balance
+    }
 }
 
 // ============================================================
@@ -159,7 +167,7 @@ class BankAccount: Identifiable, AccountOperations, Summarizable {
 
 // 4A: Summarizable protocol
 protocol Summarizable { var summary: String { get } }
-extension Summarizable { func printDetails() { print(summary) } }
+extension Summarizable { func printSummary() { print(summary) } }
 
 // 4B: AccountOperations protocol
 protocol AccountOperations {
@@ -227,114 +235,119 @@ struct AccountAnalytics: AnalyticsProvider {
     func transactionsByCategory() -> [String: [Transaction]] {
         Dictionary(grouping: transactions, by: { $0.resolvedCategory })
     }
-
 }
 
 // ============================================================
 // SECTION 6: Generic Result Reporter
 // ============================================================
 
+// 6: Write a generic function
+func reportResults<T: Summarizable>(_ items: [T], title: String) {
+    items.forEach { item in
+        print("=== [title] ===\nItems: \(items.count)")
+        item.printSummary()
+        print("=== End of [title] ===")
+    }
+}
+
 // ============================================================
 // SECTION 7: INTEGRATION TEST — Tie it all together
 // ============================================================
 
-struct ErrorTest {
-    let label: String
-    let setup: () -> Void
-    let action: () throws -> String
-}
+// 7: Write a function named runlabDemo() that does the following:
+func runlabDemo() {
+    div("SECTION 7: Integration Test")
 
-func runTests(_ tests: [ErrorTest]) {
-    for test in tests {
-        test.setup()
-        do {
-            let res = try test.action()
-            print("\(test.label) → \(res)")
-        } catch let err as AccountOperationsError {
-            print("\(test.label) → \(err.localizedDescription)")
-        } catch {
-            print("\(test.label) → \(error)")
-        }
+    // 7A: Create at least two BankAccount instances:
+    let checkingAccount = BankAccount(
+        id: "1",
+        accountNumber: "12341234",
+        accountType: "Checking",
+        nickname: "Everyday Checking",
+        initialBalance: 3_500.00,
+    )
+
+    let savingsAccount = BankAccount(
+        id: "2",
+        accountNumber: "99999999",
+        accountType: "Savings",
+        nickname: "Emergency Fund",
+        initialBalance: 12_000.00,
+    )
+
+    // 7B: Create at least five Transaction instances across different types
+    div("Adding Transactions")
+
+    let credit = Transaction(date: Date(), amount: 1_200.00, description: "Paycheck", type: .credit)
+    checkingAccount.addTransaction(credit)
+    print("After credit     → \(checkingAccount.formattedBalance)")
+
+    let debit1 = Transaction(date: Date(), amount: 85.50, description: "Groceries", type: .debit, category: "Food")
+    checkingAccount.addTransaction(debit1)
+    print("After debit1     → \(checkingAccount.formattedBalance)")
+
+    let debit2 = Transaction(date: Date(), amount: 42.00, description: "Gas", type: .debit, category: "Transportation")
+    checkingAccount.addTransaction(debit2)
+    print("After debit2     → \(checkingAccount.formattedBalance)")
+
+    let fee = Transaction(
+        date: Date(), amount: 5.00, description: "Monthly maintenance fee",
+        type: .fee, category: "Fees"
+    )
+    checkingAccount.addTransaction(fee)
+    print("After fee        → \(checkingAccount.formattedBalance)")
+
+    let transfer = Transaction(date: Date(), amount: 500.00, description: "Transfer to Savings", type: .transfer)
+    checkingAccount.addTransaction(transfer)
+    print("After transfer   → \(checkingAccount.formattedBalance)")
+
+    // 7C: Demonstrate error handling:
+    div("Error Handling")
+
+    do { _ = try checkingAccount.withdraw(amount: 999_999)
+    } catch let err as AccountOperationsError { print(err.localizedDescription) } catch { print(error) }
+
+    do { _ = try checkingAccount.deposit(amount: -50)
+    } catch let err as AccountOperationsError { print(err.localizedDescription) } catch { print(error) }
+
+    do { _ = try savingsAccount.transfer(amount: 10, to: savingsAccount)
+    } catch let err as AccountOperationsError { print(err.localizedDescription) } catch { print(error) }
+
+    // 7D: Create an AccountAnalytics instance with the checking account's transactions.
+    div("Analytics")
+
+    let analytics = AccountAnalytics(transactions: checkingAccount.transactions)
+    print("Total credits: \(analytics.totalCredits)")
+    print("Total debits: \(analytics.totalDebits)")
+    print("Net flow: \(analytics.netFlow)")
+
+    if let largest = analytics.largestTransaction {
+        print("Largest transaction: \(largest.description) — \(largest.formattedAmount)")
     }
+
+    for (category, categoryTransactions) in analytics.transactionsByCategory() {
+        print("\(category): \(categoryTransactions.count)")
+    }
+
+    // 7E: Call reportResults with the checking account's transactions, title: "Checking Transactions"
+    div("Reports")
+
+    reportResults(checkingAccount.transactions, title: "Checking Transactions")
+    reportResults([checkingAccount, savingsAccount], title: "All Accounts")
+
+    // 7F: Demonstrate value vs. reference semantics:
+    div("Value vs. Reference Semantics")
+
+    var transactionCopy = credit
+    transactionCopy.status = .cancelled
+    print("Original status: \(String(describing: credit.status))")
+    print("Copy status: \(String(describing: transactionCopy.status))")
+
+    let checkingAlias = checkingAccount
+    do { _ = try checkingAlias.deposit(amount: 100)
+    } catch { print(error) }
+    print("checkingAccount balance: \(checkingAccount.formattedBalance)")
+    print("checkingAlias balance: \(checkingAlias.formattedBalance)")
 }
 
-func sectionTwoTests() {
-    div("Section 2 Tests")
-
-    let test1 = Transaction(
-        date: Date(),
-        amount: 10.00,
-        description: "cash deposit",
-        type: .credit
-    )
-
-    print(test1)
-    print(test1.resolvedCategory)
-    print(test1.formattedAmount)
-    print(test1.formattedDate)
-}
-
-func sectionThreeTests() {
-    div("Section 3 Tests")
-
-    let test2 = BankAccount(
-        id: "acct-1",
-        accountNumber: "String",
-        accountType: "String",
-        nickname: "String?",
-        initialBalance: 0.0,
-        currency: "String",
-        isActive: true
-    )
-    let test3 = BankAccount(
-        id: "acct-2",
-        accountNumber: "String",
-        accountType: "String",
-        nickname: "String?",
-        initialBalance: 0.0,
-        currency: "String",
-        isActive: true
-    )
-
-    print(test2)
-    print(test2.availableBalance)
-    print(test2.transactions)
-    print(test2.displayName)
-    print(test2.maskedAccountNumber)
-    print(test2.summary)
-    print(test2.formattedBalance)
-    print(test2.recentTransactions)
-    print(test2.pendingCount)
-
-div("BankAccount.Deposit")
-runTests([
-    ErrorTest(label: "success", setup: { test2.isActive = true }) { try test2.deposit(amount: 100) },
-    ErrorTest(label: "invalidAmount", setup: {}) { try test2.deposit(amount: 0) },
-    ErrorTest(label: "accountInactive", setup: { test2.isActive = false }) { try test2.deposit(amount: 100) }
-])
-
-div("BankAccount.Withdraw")
-runTests([
-    ErrorTest(label: "success", setup: { test2.isActive = true }) { try test2.withdraw(amount: 10) },
-    ErrorTest(label: "invalidAmount", setup: {}) { try test2.withdraw(amount: 0) },
-    ErrorTest(label: "insufficientFunds", setup: {}) { try test2.withdraw(amount: 100) },
-    ErrorTest(label: "accountInactive", setup: { test2.isActive = false }) { try test2.withdraw(amount: 10) }
-])
-
-div("BankAccount.Transfer")
-runTests([
-    ErrorTest(label: "success", setup: { test2.isActive = true }) { try test2.transfer(amount: 10, to: test3) },
-    ErrorTest(label: "invalidAmount", setup: {}) { try test2.transfer(amount: 0, to: test3) },
-    ErrorTest(label: "insufficientFunds", setup: {}) { try test2.transfer(amount: 100, to: test3) },
-    ErrorTest(label: "transferToSameAccount", setup: {}) { try test2.transfer(amount: 10, to: test2) },
-    ErrorTest(label: "accountInactive", setup: { test2.isActive = false }) { try test2.transfer(amount: 10, to: test3) }
-])
-
-}
-
-func tests() {
-    sectionTwoTests()
-    sectionThreeTests()
-}
-
-tests()
+runlabDemo()
