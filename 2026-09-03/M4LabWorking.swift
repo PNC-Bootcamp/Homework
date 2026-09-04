@@ -244,9 +244,9 @@ struct AccountAnalytics: AnalyticsProvider {
 // 6: Write a generic function
 func reportResults<T: Summarizable>(_ items: [T], title: String) {
     items.forEach { item in
-        print("=== [title] ===\nItems: \(items.count)")
+        print("=== \(title) ===\nItems: \(items.count)")
         item.printSummary()
-        print("=== End of [title] ===")
+        print("=== End of \(title) ===")
     }
 }
 
