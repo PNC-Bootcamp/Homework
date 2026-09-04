@@ -133,7 +133,9 @@ class BankAccount: Identifiable, AccountOperations, Summarizable {
 
     func withdraw(amount: Double) throws -> String {
         guard amount > 0 else { throw AccountOperationsError.invalidAmount }
-        guard amount <= balance else { throw AccountOperationsError.insufficientFunds(available: self.balance, required: amount) }
+        guard amount <= balance else {
+            throw AccountOperationsError.insufficientFunds(available: self.balance, required: amount) 
+        }
         guard isActive else {throw AccountOperationsError.accountInactive}
         self.balance -= amount
         return "Withdrawn: $\(amount) | New Balance: $\(self.balance)"
@@ -195,9 +197,38 @@ enum AccountOperationsError: LocalizedError {
 // ============================================================
 // SECTION 5: Analytics
 // ============================================================
-// TODO 5A: AnalyticsProvider protocol
+// 5A: AnalyticsProvider protocol
+protocol AnalyticsProvider {
+    var totalCredits: Double { get }
+    var totalDebits: Double { get }
+    var netFlow: Double { get }         // credits - debits
+    var largestTransaction: Transaction? { get }
+    func monthlyTotal(month: Int, year: Int) -> Double
+    func transactionsByCategory() -> [String: [Transaction]]
+}
 
-// TODO 5B: AccountAnalytics struct
+// 5B: AccountAnalytics struct
+struct AccountAnalytics: AnalyticsProvider {
+    var transactions: [Transaction] = []
+    var totalCredits: Double { transactions.filter { !$0.type.isExpense }.reduce(0) { $0 + $1.amount } }
+    var totalDebits: Double { transactions.filter { $0.type.isExpense }.reduce(0) { $0 + $1.amount } }
+    var netFlow: Double { totalCredits - totalDebits }
+    var largestTransaction: Transaction? { transactions.max(by: { $0.amount < $1.amount }) ?? nil }
+
+    func monthlyTotal(month: Int, year: Int) -> Double {
+        let calendar = Calendar.current
+        return transactions
+            .filter { transaction in
+                let components = calendar.dateComponents([.year, .month], from: transaction.date)
+                return components.year == year && components.month == month && transaction.type.isExpense
+            } .reduce(0) { $0 + $1.amount }
+    }
+
+    func transactionsByCategory() -> [String: [Transaction]] {
+        Dictionary(grouping: transactions, by: { $0.resolvedCategory })
+    }
+
+}
 
 // ============================================================
 // SECTION 6: Generic Result Reporter
