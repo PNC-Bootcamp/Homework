@@ -100,7 +100,7 @@ enum TransferError: Error, Equatable {
     case insufficientFunds
 }
 
-nonisolated struct TransferEligibilityService {
+struct TransferEligibilityService {
     // TODO: implement canTransfer(amount:from:) -> Result<Void, TransferError>
     // covering the same two rules as the BEFORE version above: amount must
     // be greater than zero, and the source account must have sufficient
@@ -116,7 +116,7 @@ nonisolated struct TransferEligibilityService {
 
 // MARK: - TODO 3: TransferViewModel
 
-nonisolated final class TransferViewModel {
+final class TransferViewModel {
     // TODO: no UIKit import anywhere in this file below this point.
     // Store an AccountsRepository and a TransferEligibilityService,
     // injected via the initializer. Expose onError and onSuccess
