@@ -26,25 +26,33 @@
 
 package com.tylerswindell.jetpackcomposedemos.homework
 
+import android.R
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.toggleable
+import kotlinx.coroutines.delay
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tylerswindell.jetpackcomposedemos.ui.theme.KazooTheme
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 // MARK: - Model (complete — no changes needed)
 
@@ -63,6 +71,7 @@ val sampleAccounts = listOf(
 
 // MARK: - TODO 1: AccountListScreen
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun AccountListScreen(accounts: List<Account>, onAccountClick: (String) -> Unit) {
@@ -75,35 +84,72 @@ fun AccountListScreen(accounts: List<Account>, onAccountClick: (String) -> Unit)
 
     var refreshed by remember { mutableStateOf(false) }
 
-    Scaffold() { paddingValues ->
+    LaunchedEffect(refreshed) {
+        if (refreshed) delay(2000.milliseconds)
+        refreshed = false
+    }
 
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text("Accounts", style = MaterialTheme.typography.titleLarge)
+                }
+            )
+        },
+    ) { innerPadding ->
 
-        Column( modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp) ) {
-            Button(onClick = { refreshed = true }) { Text("Refresh") }
-
-            AnimatedVisibility(
-                visible = refreshed,
-                enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
-                exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                        .align(Alignment.CenterHorizontally),
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    items(items = accounts, key = { it.id }) { account ->
+                        AccountRow(account = account, onClick = { onAccountClick(account.id) })
+                    }
+                }
 
-                ) { Text("Refreshed!", modifier = Modifier.padding(16.dp)) }
+                Button(
+                    onClick = { refreshed = true },
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text("Refresh")
+                }
             }
 
-            LazyColumn(
+            // the banner
+            AnimatedVisibility(
+                visible = refreshed,
+                enter = fadeIn() + slideInVertically { -it },
+                exit = fadeOut() + slideOutVertically { -it },
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
+                    .align(Alignment.TopCenter)
+                    .padding(12.dp)
             ) {
-                items( items = accounts, key = { it.id }) {
-                    AccountRow(account = it, onClick = { onAccountClick(it.id) } )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                ) {
+                    Text(
+                        text = "Refreshed!",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(25.dp),
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }
@@ -120,7 +166,7 @@ fun AccountRow(account: Account, onClick: () -> Unit) {
     // Modifier.semantics(mergeDescendants = true) {} and a single,
     // readable contentDescription for the whole row.
 
-    val description = "${account.name}, account ${account.maskedNumber}, balance ${account.balance}"
+    val description = "Account name ${account.name}, account ${account.maskedNumber}, balance ${account.balance}"
     Card (
         modifier = Modifier
             .padding(4.dp)
